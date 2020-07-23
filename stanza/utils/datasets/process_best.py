@@ -22,6 +22,8 @@ import random
 import re
 import sys
 
+from pythainlp import sent_tokenize
+
 from stanza.utils.datasets.process_thai_tokenization import write_dataset
 
 def clean_line(line):
@@ -70,6 +72,15 @@ def clean_word(word):
         return word
     return word
 
+def reprocess_lines(processed_lines):
+    reprocessed_lines = []
+    for line in processed_lines:
+        text = "".join(line)
+        chunks = sent_tokenize(text)
+        if sum(len(x) for x in chunks) != len(text):
+            raise ValueError("Got unexpected text length: \n{}\nvs\n{}".format(text, chunks))
+        reprocessed_lines.append(line)
+    return reprocessed_lines
 
 def read_data(input_dir):
     subdirs = [os.path.join(input_dir, 'article'),
@@ -96,6 +107,8 @@ def read_data(input_dir):
                         raise ValueError("Unexpected word '{}' in document {}".format(word, filename))
                 words = [x for x in words if x]
                 processed_lines.append(words)
+
+            processed_lines = reprocess_lines(processed_lines)
 
             for words in processed_lines:
                 # turn the words into a sentence
